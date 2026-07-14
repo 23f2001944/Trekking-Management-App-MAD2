@@ -21,7 +21,7 @@
 
 
 <script>
-import axios from 'axios'
+import api from '@/api/axios'
 
 export default {
     name: "UserLogin",
@@ -36,7 +36,7 @@ export default {
     methods: {
         async handleLogin() {
             try {
-                const response = await axios.post('http://localhost:5000/api/login', this.form);
+                const response = await api.post('/login', this.form);
                 localStorage.setItem('token', response.data.data.access_token)
                 localStorage.setItem('role', response.data.data.role)
                 alert('Login successful!');
@@ -50,7 +50,7 @@ export default {
                     this.$router.push("/user");
                 }
             } catch (error) {
-                console.error('Login failed!', error);
+                alert(error.response?.data?.message || 'Login failed! Please try again.');
             }
         }
     }

@@ -29,7 +29,7 @@
 
 
 <script>
-import axios from 'axios'
+import api from '@/api/axios'
 
 export default {
     name: "UserRegister",
@@ -46,11 +46,11 @@ export default {
     methods: {
         async handleRegister() {
             try {
-                await axios.post('http://localhost:5000/api/register', this.form);
+                await api.post('/register', this.form);
                 alert("Registration successful!");
                 this.$router.push("/login");
             } catch (error) {
-                console.error('Registration failed!', error);
+                alert(error.response?.data?.message || 'Registration failed! Please try again.');
             }
         }
     }
