@@ -69,22 +69,22 @@ def routes(app):
         data = request.get_json(silent=True) or {}
 
         if role == Role.STAFF:
-            allowed_fields = {'status', 'available_slots'}
+            allowed_fields = {'status', 'total_slots'}
             if any(key not in allowed_fields for key in data):
-                return jsonify({'message': 'Staff can only update status and available_slots'}), 403
+                return jsonify({'message': 'Staff can only update status and total_slots'}), 403
 
             if 'status' in data:
                 if data.get('status') not in TrekStatus.ALL:
                     return jsonify({'message': 'Invalid trek status'}), 400
                 trek.status = data['status']
 
-            if 'available_slots' in data:
-                new_available = data['available_slots']
-                if new_available < 0:
-                    return jsonify({'message': 'available_slots cannot be negative'}), 400
-                if new_available > trek.total_slots:
-                    return jsonify({'message': 'available_slots cannot exceed total_slots'}), 400
-                trek.available_slots = new_available
+            if 'total_slots' in data:
+                new_total = data['total_slots']
+                occupied = trek.total_slots - trek.available_slots
+                if new_total < occupied:
+                    return jsonify({'message': 'total_slots cannot be less than occupied slots'}), 400
+                trek.total_slots = new_total
+                trek.available_slots = new_total - occupied
 
             db.session.commit()
             return jsonify({'message': 'Trek updated successfully!'}), 200
@@ -114,20 +114,12 @@ def routes(app):
             return jsonify({'message': 'start_date must be before end_date'}), 400
 
         new_total = data.get('total_slots', trek.total_slots)
-        new_available = data.get('available_slots', trek.available_slots)
-
-        if new_available < 0:
-            return jsonify({'message': 'available_slots cannot be negative'}), 400
-
-        if new_available > new_total:
-            return jsonify({'message': 'available_slots cannot exceed total_slots'}), 400
-
         occupied = trek.total_slots - trek.available_slots
         if new_total < occupied:
             return jsonify({'message': 'total_slots cannot be less than occupied slots'}), 400
 
         trek.total_slots = new_total
-        trek.available_slots = new_available
+        trek.available_slots = new_total - occupied
         
         if 'assigned_staff_id' in data:
             new_staff_id = data['assigned_staff_id']

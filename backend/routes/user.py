@@ -1,7 +1,8 @@
-from flask import jsonify, request
+from flask import jsonify, request, send_from_directory
 from werkzeug.security import generate_password_hash
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from models import db, Role, User, TrekStatus, Trek, BookingStatus, Booking
+from tasks import export_booking_history, EXPORT_DIR
 
 def routes(app):
     @app.route('/api/book/trek/<int:trek_id>', methods=['POST'])
@@ -128,3 +129,29 @@ def routes(app):
 
         db.session.commit()
         return jsonify({'message': 'Profile updated successfully!'}), 200
+    
+    # ================ CELERY ==================
+    @app.route('/api/export/history', methods=['POST'])
+    @jwt_required()
+    def trigger_export():
+        user_id = int(get_jwt_identity())
+        task = export_booking_history.delay(user_id)
+        return jsonify({'task_id': task.id}), 202
+
+    @app.route('/api/export/status/<task_id>', methods=['GET'])
+    @jwt_required()
+    def export_status(task_id):
+        task = export_booking_history.AsyncResult(task_id)
+        if task.state == 'SUCCESS':
+            return jsonify({'status': 'done', 'filename': task.result})
+        if task.state == 'FAILURE':
+            return jsonify({'status': 'failed'})
+        return jsonify({'status': 'pending'})
+
+    @app.route('/api/export/download/<filename>', methods=['GET'])
+    @jwt_required()
+    def download_export(filename):
+        user_id = str(get_jwt_identity())
+        if not filename.startswith(f"history_{user_id}_"):
+            return jsonify({'message': 'Not authorized to access this file'}), 403
+        return send_from_directory(EXPORT_DIR, filename, as_attachment=True)

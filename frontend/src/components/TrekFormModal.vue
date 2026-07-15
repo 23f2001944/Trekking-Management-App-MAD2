@@ -44,11 +44,7 @@
 
                 <div class="col-md-6">
                   <label class="form-label">Total Slots</label>
-                  <input v-model.number="form.total_slots" type="number" min="1" class="form-control" :disabled="isStaff" required>
-                </div>
-                <div class="col-md-6" v-if="isEdit">
-                  <label class="form-label">Available Slots</label>
-                  <input v-model.number="form.available_slots" type="number" min="0" class="form-control" required>
+                  <input v-model.number="form.total_slots" type="number" min="1" class="form-control" required>
                 </div>
 
                 <div class="col-md-6">
@@ -136,7 +132,6 @@ export default {
         start_date: '',
         end_date: '',
         total_slots: null,
-        available_slots: null,
         assigned_staff_id: null,
         status: 'Pending'
       }
@@ -150,7 +145,6 @@ export default {
         start_date: this.toInputDate(trek.start_date),
         end_date: this.toInputDate(trek.end_date),
         total_slots: trek.total_slots,
-        available_slots: trek.available_slots,
         assigned_staff_id: trek.assigned_staff_id,
         status: trek.status
       }
@@ -171,10 +165,10 @@ export default {
       this.saving = true
       try {
         if (this.isStaff) {
-          // Staff can only touch status and available_slots (enforced by backend too)
+          // Staff can only touch status and total_slots (enforced by backend too)
           await api.put(`/update/trek/${this.trek.id}`, {
             status: this.form.status,
-            available_slots: this.form.available_slots
+            total_slots: this.form.total_slots
           })
         } else if (this.isEdit) {
           await api.put(`/update/trek/${this.trek.id}`, {
@@ -186,7 +180,6 @@ export default {
             start_date: this.toApiDate(this.form.start_date),
             end_date: this.toApiDate(this.form.end_date),
             total_slots: this.form.total_slots,
-            available_slots: this.form.available_slots,
             assigned_staff_id: this.form.assigned_staff_id
           })
         } else {
