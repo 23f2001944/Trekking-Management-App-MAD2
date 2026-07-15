@@ -47,6 +47,12 @@ def routes(app):
         elif role == Role.ADMIN:
             bookings = Booking.query.order_by(Booking.booking_date.desc()).all()
 
+        elif role == Role.STAFF:
+            staff_id = int(get_jwt_identity())
+            bookings = (Booking.query.join(Trek)
+                        .filter(Trek.assigned_staff_id == staff_id)
+                        .order_by(Booking.booking_date.desc()).all())
+    
         else:
             return jsonify({'message': 'Unauthorized'}), 403
 
@@ -65,8 +71,8 @@ def routes(app):
                 'end_date': booking.trek.end_date.strftime("%d-%m-%Y"),
             }
 
-            # Only admins need user details
-            if role == Role.ADMIN:
+            # Only admins and staff members need user details
+            if role in (Role.ADMIN, Role.STAFF):
                 booking_data['user_name'] = booking.user.name
                 booking_data['user_email'] = booking.user.email
 

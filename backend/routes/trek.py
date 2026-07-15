@@ -49,18 +49,44 @@ def routes(app):
     @app.route('/api/update/trek/<int:trek_id>', methods=['PUT'])
     @jwt_required()
     def update_trek(trek_id):
-        if get_jwt().get('role') != Role.ADMIN:
-            return jsonify({'message': 'Admin access required'}), 401
+        role = get_jwt().get('role')
+        if role not in (Role.ADMIN, Role.STAFF):
+            return jsonify({'message': 'Admin or assigned staff access required'}), 401
         
         trek = Trek.query.filter_by(id=trek_id).first()
-
+        
         if not trek:
-            return jsonify({'message': "Trek doesn't exist."}), 401
+            return jsonify({'message': "Trek doesn't exist."}), 404
+        
+        if role == Role.STAFF:
+            staff_id = int(get_jwt_identity())
+            if trek.assigned_staff_id != staff_id:
+                return jsonify({'message': 'You are not assigned to this trek'}), 403
         
         if trek.status == TrekStatus.COMPLETED:
             return jsonify({'message': 'Completed treks cannot be edited'}), 400
         
         data = request.get_json(silent=True) or {}
+
+        if role == Role.STAFF:
+            allowed_fields = {'status', 'available_slots'}
+            if any(key not in allowed_fields for key in data):
+                return jsonify({'message': 'Staff can only update status and available_slots'}), 403
+
+            if 'status' in data:
+                if data.get('status') not in TrekStatus.ALL:
+                    return jsonify({'message': 'Invalid trek status'}), 400
+                trek.status = data['status']
+
+            if 'available_slots' in data:
+                new_available = data['available_slots']
+                if new_available > trek.total_slots:
+                    return jsonify({'message': 'available_slots cannot exceed total_slots'}), 400
+                trek.available_slots = new_available
+
+            db.session.commit()
+            return jsonify({'message': 'Trek updated successfully!'}), 200
+
         trek.name = data.get('name', trek.name)
         trek.description = data.get('description', trek.description)
         trek.location = data.get('location', trek.location)
@@ -123,6 +149,9 @@ def routes(app):
         elif role == Role.STAFF:
             query = query.filter_by(assigned_staff_id = int(get_jwt_identity()))
 
+        elif role == Role.ADMIN:
+            pass    # no filter for admin
+
         else:
             return jsonify({'message': 'Unauthorized access'}), 401
         
@@ -155,3 +184,18 @@ def routes(app):
             }
             data.append(trek_data)
         return jsonify(data)
+
+
+    @app.route('/api/delete/trek/<int:trek_id>', methods=['DELETE'])
+    @jwt_required()
+    def delete_trek(trek_id):
+        if get_jwt().get('role') != Role.ADMIN:
+            return jsonify({'message': 'Admin access required'}), 401
+        trek = Trek.query.get(trek_id)
+        if not trek:
+            return jsonify({'message': "Trek doesn't exist."}), 404
+        if trek.bookings:  # has any bookings, cancelled or not
+            return jsonify({'message': 'Cannot delete a trek with existing bookings; close it instead'}), 400
+        db.session.delete(trek)
+        db.session.commit()
+        return jsonify({'message': 'Trek deleted successfully!'}), 200
