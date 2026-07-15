@@ -32,10 +32,8 @@ router.beforeEach((to) => {
   const role = localStorage.getItem('role')
   const token = localStorage.getItem('token')
 
-  if (to.meta.role) {
-    if (!token) return '/login'
-    if (to.meta.role != role) return '/login'
-  }
+  if (to.meta.requiresAuth && !token) return '/login'
+  if (to.meta.role && to.meta.role !== role) return '/login'
   return true
 })
 

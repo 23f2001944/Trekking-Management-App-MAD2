@@ -80,6 +80,8 @@ def routes(app):
 
             if 'available_slots' in data:
                 new_available = data['available_slots']
+                if new_available < 0:
+                    return jsonify({'message': 'available_slots cannot be negative'}), 400
                 if new_available > trek.total_slots:
                     return jsonify({'message': 'available_slots cannot exceed total_slots'}), 400
                 trek.available_slots = new_available
@@ -113,6 +115,9 @@ def routes(app):
 
         new_total = data.get('total_slots', trek.total_slots)
         new_available = data.get('available_slots', trek.available_slots)
+
+        if new_available < 0:
+            return jsonify({'message': 'available_slots cannot be negative'}), 400
 
         if new_available > new_total:
             return jsonify({'message': 'available_slots cannot exceed total_slots'}), 400
@@ -180,7 +185,8 @@ def routes(app):
                 'end_date' : trek.end_date.strftime("%d-%m-%Y"),
                 'total_slots' : trek.total_slots,
                 'available_slots' : trek.available_slots,
-                'assigned_staff_id': trek.assigned_staff_id
+                'assigned_staff_id': trek.assigned_staff_id,
+                'duration': trek.duration,
             }
             data.append(trek_data)
         return jsonify(data)

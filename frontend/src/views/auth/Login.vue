@@ -39,6 +39,7 @@ export default {
                 const response = await api.post('/login', this.form);
                 localStorage.setItem('token', response.data.data.access_token)
                 localStorage.setItem('role', response.data.data.role)
+                localStorage.setItem('name', response.data.data.name)   // for name to be visible in the navbar
                 alert('Login successful!');
                 if (response.data.data.role === "admin") {
                     this.$router.push("/admin");
