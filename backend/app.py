@@ -3,7 +3,7 @@ from flask_cors import CORS
 from datetime import datetime
 from werkzeug.security import generate_password_hash
 from flask_jwt_extended import JWTManager
-from models import db, Role, User
+from models import db, cache, Role, User
 
 from routes.auth import routes as auth_routes
 from routes.admin import routes as admin_routes
@@ -15,10 +15,16 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///tma-mad2.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'thisismysecretkeyfornow'
+app.config['CACHE_TYPE'] = 'RedisCache'
+app.config['CACHE_REDIS_HOST'] = 'localhost'
+app.config['CACHE_REDIS_PORT'] = 6379
+app.config['CACHE_REDIS_DB'] = 0
+app.config['CACHE_DEFAULT_TIMEOUT'] = 60    # in seconds
 
 CORS(app)
 
 db.init_app(app)
+cache.init_app(app)
 
 jwt = JWTManager(app)
 

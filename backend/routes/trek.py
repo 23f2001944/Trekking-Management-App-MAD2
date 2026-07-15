@@ -1,9 +1,14 @@
 from flask import jsonify, request
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
-from models import db, Role, User, TrekStatus, Trek, BookingStatus, Booking
+from models import db, Role, User, TrekStatus, Trek, BookingStatus, Booking, cache
 
 def routes(app):
+    def make_treks_cache_key():
+        role = get_jwt().get('role')
+        identity = get_jwt_identity()
+        return f"treks:{role}:{identity}:{request.query_string.decode()}"
+
     @app.route('/api/create/trek', methods=['POST'])
     @jwt_required()
     def create_trek():
@@ -44,6 +49,7 @@ def routes(app):
         )
         db.session.add(trek)
         db.session.commit()   
+        cache.clear()
         return jsonify({'message': 'Trek created successfully!'}), 201
 
     @app.route('/api/update/trek/<int:trek_id>', methods=['PUT'])
@@ -130,12 +136,15 @@ def routes(app):
             trek.assigned_staff_id = new_staff_id
 
         db.session.commit()
+        cache.clear()
         return jsonify({'message': 'Trek updated successfully!'}), 201
 
 
     @app.route('/api/treks', methods=['GET'])
     @jwt_required()
+    @cache.cached(timeout=60, key_prefix=make_treks_cache_key)
     def get_treks():
+        print("DATABASE WAS HIT")       # check for caching 
         role = get_jwt().get('role')
         query = Trek.query
 
@@ -196,4 +205,5 @@ def routes(app):
             return jsonify({'message': 'Cannot delete a trek with existing bookings; close it instead'}), 400
         db.session.delete(trek)
         db.session.commit()
+        cache.clear()
         return jsonify({'message': 'Trek deleted successfully!'}), 200
