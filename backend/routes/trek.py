@@ -186,7 +186,7 @@ def routes(app):
                 'total_slots' : trek.total_slots,
                 'available_slots' : trek.available_slots,
                 'assigned_staff_id': trek.assigned_staff_id,
-                'duration': trek.duration,
+                'duration': trek.duration
             }
             data.append(trek_data)
         return jsonify(data)

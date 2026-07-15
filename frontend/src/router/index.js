@@ -3,6 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/auth/Login.vue'
 import Register from '@/views/auth/Register.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
+import AdminTreks from '@/views/admin/AdminTreks.vue'
+import AdminStaff from '@/views/admin/AdminStaff.vue'
 import StaffDashboard from '@/views/staff/StaffDashboard.vue'
 import UserDashboard from '@/views/user/UserDashboard.vue'
 
@@ -16,6 +18,8 @@ const routes = [
 
   // Admin
   { path: "/admin", component: AdminDashboard, meta: { role: "admin" } },
+  { path: "/admin/treks", component: AdminTreks, meta: { role: "admin" } },
+  { path: "/admin/staff", component: AdminStaff, meta: { role: "admin" } },
 
   // Staff
   { path: "/staff", component: StaffDashboard, meta: { role: "staff" } },
