@@ -1,10 +1,15 @@
+from dotenv import load_dotenv
+import os
 from celery import Celery
 from celery.schedules import crontab
 
+load_dotenv()
+
 celery = Celery(
     'tma',
-    broker='redis://localhost:6379/0',
-    backend='redis://localhost:6379/1'
+    broker=f"redis://{os.getenv('REDIS_HOST','localhost')}:{os.getenv('REDIS_PORT',6379)}/{os.getenv('CELERY_BROKER_DB',0)}",
+    backend=f"redis://{os.getenv('REDIS_HOST','localhost')}:{os.getenv('REDIS_PORT',6379)}/{os.getenv('CELERY_BACKEND_DB',1)}",
+    include=['tasks'],
 )
 
 celery.conf.beat_schedule = {

@@ -1,4 +1,6 @@
 from flask import Flask
+from dotenv import load_dotenv
+import os
 from flask_cors import CORS
 from datetime import datetime
 from werkzeug.security import generate_password_hash
@@ -12,13 +14,13 @@ from routes.user import routes as user_routes
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///tma-mad2.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'thisismysecretkeyfornow'
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['CACHE_TYPE'] = 'RedisCache'
-app.config['CACHE_REDIS_HOST'] = 'localhost'
-app.config['CACHE_REDIS_PORT'] = 6379
-app.config['CACHE_REDIS_DB'] = 0
+app.config['CACHE_REDIS_HOST'] = os.getenv('REDIS_HOST', 'localhost')
+app.config['CACHE_REDIS_PORT'] = int(os.getenv('REDIS_PORT', 6379))
+app.config['CACHE_REDIS_DB'] = int(os.getenv('CACHE_REDIS_DB', 0))
 app.config['CACHE_DEFAULT_TIMEOUT'] = 60    # in seconds
 
 CORS(app)

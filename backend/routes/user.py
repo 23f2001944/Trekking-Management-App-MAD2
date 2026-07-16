@@ -1,7 +1,7 @@
 from flask import jsonify, request, send_from_directory
 from werkzeug.security import generate_password_hash
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
-from models import db, Role, User, TrekStatus, Trek, BookingStatus, Booking
+from models import db, Role, User, TrekStatus, Trek, BookingStatus, Booking, cache
 from tasks import export_booking_history, EXPORT_DIR
 
 def routes(app):
@@ -33,6 +33,7 @@ def routes(app):
 
         db.session.add(booking)
         db.session.commit()
+        cache.clear()
         return jsonify({'message': 'Trek booked successfully!'}), 201
 
 
@@ -96,6 +97,7 @@ def routes(app):
         booking.status = BookingStatus.CANCELLED
         booking.trek.available_slots += 1
         db.session.commit()
+        cache.clear()
         return jsonify({'message': 'Booking cancelled successfully!'}), 200
 
 

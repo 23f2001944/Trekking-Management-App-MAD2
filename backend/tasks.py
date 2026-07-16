@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import os
 import csv
 import smtplib
@@ -6,10 +7,12 @@ from email.mime.text import MIMEText
 from datetime import date, timedelta
 from celery_app import celery
 
-SMTP_HOST = 'smtp.gmail.com'
-SMTP_PORT = 587
-SMTP_USER = 'youremail@gmail.com'
-SMTP_PASSWORD = 'your-16-char-app-password' 
+load_dotenv()
+
+SMTP_HOST = os.getenv('SMTP_HOST')
+SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
+SMTP_USER = os.getenv('SMTP_USER')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
 
 EXPORT_DIR = os.path.join(os.path.dirname(__file__), 'exports')
 os.makedirs(EXPORT_DIR, exist_ok=True)
